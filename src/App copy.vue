@@ -37,11 +37,11 @@
     <br />
     <button @click="startGame">开始游戏</button>
   </div>
-  <!-- <div v-else-if="step === 2" class="intro">
+  <div v-else-if="step === 2" class="intro">
     <h1>{{ result ? "You Win！🎉" : "You Lose!😢" }}</h1>
     <button @click="rePlay">再来一轮</button>
     <button @click="setGame">难度调节</button>
-  </div> -->
+  </div>
   <div v-else class="box">
     <div class="card-wrap" :style="cardWrapStyle">
       <div
@@ -54,7 +54,7 @@
       >
         {{ item.content }}
       </div>
-      <!-- <div
+      <div
         v-for="item in penddingList"
         :key="item.key"
         class="card-item"
@@ -88,14 +88,14 @@
           saveList.length +
           clearList.length
         }}
-      </p> -->
+      </p>
     </div>
-    <!-- <div class="tools">
+    <div class="tools">
       道具：
       <button :disabled="!tools.save" @click="saveCard">取出3个卡片</button>
       <button :disabled="!tools.rand" @click="randCard">随机</button>
       <button @click="rePlay">再来一轮</button>
-    </div> -->
+    </div>
   </div>
 </template>
 
@@ -199,6 +199,60 @@ export default {
     },
   },
   methods: {
+    // 打乱cardItemList数组
+    randCard() {
+      if (!this.tools.rand) {
+        return;
+      }
+      this.tools.rand = false;
+      const length = this.cardItemList.length;
+      this.cardItemList.forEach((item) => {
+        const randNum = Math.floor(length * Math.random());
+        const newItem = this.cardItemList[randNum];
+        let temp;
+        temp = item.style.left;
+        item.style.left = newItem.style.left;
+        newItem.style.left = temp;
+        temp = item.style.top;
+        item.style.top = newItem.style.top;
+        newItem.style.top = temp;
+        temp = item.x;
+        item.x = newItem.x;
+        newItem.x = temp;
+        temp = item.y;
+        item.y = newItem.y;
+        newItem.y = temp;
+        temp = item.z;
+        item.z = newItem.z;
+        newItem.z = temp;
+      });
+
+      this.cardItemList.sort((a, b) => a.z - b.z);
+      this.calcCover();
+    },
+
+    // 从下面的列表中取出三张卡片
+    saveCard() {
+      if (!this.tools.save) {
+        return false;
+      }
+      this.tools.save = false;
+      // 取出penddingList的前三张卡片
+      this.saveList = this.penddingList.slice(0, 3);
+      // 异步将前三张卡片向上移动
+      setTimeout(() => {
+        this.saveList.forEach((item, index) => {
+          item.style.top = "110%";
+          item.style.left = this.leftOffset + index * CardItem.x * 2 + "px";
+          this.calcValueList[item.val]--;
+        });
+      }, 0);
+      this.penddingList = this.penddingList.slice(3);
+      this.penddingList.forEach((item, index) => {
+        item.style.top = "160%";
+        item.style.left = this.leftOffset + index * CardItem.x * 2 + "px";
+      });
+    },
     initGame() {
       this.step = 1;
       this.getMap(this.option);
