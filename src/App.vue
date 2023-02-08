@@ -37,11 +37,11 @@
     <br />
     <button @click="startGame">开始游戏</button>
   </div>
-  <!-- <div v-else-if="step === 2" class="intro">
+  <div v-else-if="step === 2" class="intro">
     <h1>{{ result ? "You Win！🎉" : "You Lose!😢" }}</h1>
     <button @click="rePlay">再来一轮</button>
     <button @click="setGame">难度调节</button>
-  </div> -->
+  </div>
   <div v-else class="box">
     <div class="card-wrap" :style="cardWrapStyle">
       <div
@@ -54,18 +54,10 @@
       >
         {{ item.content }}
       </div>
-      <!-- <div
+      <div
         v-for="item in penddingList"
         :key="item.key"
         class="card-item"
-        :style="item.style"
-      >
-        {{ item.content }}
-      </div>
-      <div
-        v-for="item in clearList"
-        :key="item.key"
-        class="card-item clear-item"
         :style="item.style"
       >
         {{ item.content }}
@@ -79,30 +71,23 @@
       >
         {{ item.content }}
       </div>
-      <p class="card-tips">
-        剩余空位:{{ 7 - penddingList.length }}/7；已消除:{{
-          clearList.length
-        }}/{{
-          cardItemList.length +
-          penddingList.length +
-          saveList.length +
-          clearList.length
-        }}
-      </p> -->
+      <p class="card-tips">剩余空位:{{ 7 - penddingList.length }}/7；</p>
     </div>
-    <!-- <div class="tools">
+    <div class="tools">
       道具：
       <button :disabled="!tools.save" @click="saveCard">取出3个卡片</button>
       <button :disabled="!tools.rand" @click="randCard">随机</button>
       <button @click="rePlay">再来一轮</button>
-    </div> -->
+    </div>
   </div>
 </template>
 
 <script>
+// 卡片类
 class CardItem {
   static x = 20;
   static y = 21;
+  // 颜色数组
   static colorType = {
     1: { background: "#FFB7DD" },
     2: { background: "#FFCCCC" },
@@ -119,6 +104,7 @@ class CardItem {
     13: { background: "#CCEEFF" },
     14: { background: "#CCDDFF" },
   };
+  // 卡片种类
   static contentType = {
     1: "🥕",
     2: "✂️",
@@ -135,6 +121,7 @@ class CardItem {
     13: "🪵",
     14: "🔥",
   };
+
   constructor({ x, y, z, key }) {
     this.x = x;
     this.y = y;
@@ -154,14 +141,16 @@ class CardItem {
 
   setValue(val) {
     this.val = val;
+    // 设置卡片种类
     this.content = CardItem.contentType[val];
+    // 给卡片添加颜色样式
     Object.assign(this.style, CardItem.colorType[val]);
   }
 }
-
 export default {
   data() {
     return {
+      step: 0,
       option: {
         x: 6,
         y: 4,
@@ -169,12 +158,12 @@ export default {
         cardRandom: 0.2,
         maxCardType: 11,
       },
-      step: 0,
       win: false,
       cardMap: [],
+      // 存放卡片信息列表
       cardItemList: [],
+      // 存储池列表
       penddingList: [],
-      clearList: [],
       saveList: [],
       calcValueList: [],
       xUnit: 0,
@@ -186,50 +175,35 @@ export default {
       timer: 0,
     };
   },
-  computed: {
-    cardWrapStyle() {
-      return {
-        width: (this.xUnit + 2) * CardItem.x + "px",
-        height: (this.yUnit + 1) * CardItem.y + "px",
-      };
-    },
-    leftOffset() {
-      const wrapWidth = (this.xUnit + 2) * CardItem.x;
-      return (wrapWidth - 7 * CardItem.x * 2) / 2;
-    },
-  },
   methods: {
+    // 开始游戏按钮
     initGame() {
       this.step = 1;
-      this.getMap(this.option);
+      // 获取地图
+      this.getmap(this.option);
       this.penddingList = [];
-      this.clearList = [];
       this.saveList = [];
       this.tools.save = true;
       this.tools.rand = true;
+      // 根据最大卡片种类，为每个位置设置卡片种类
       this.setCardValue({ maxCardType: Number(this.option.maxCardType) });
       this.calcCover();
     },
 
-    // 初始化地图，创建数组
-    initGameMap({ x, y, z }) {
+    // 构建地图
+    getmap({ x, y, z, cardRandom } = {}) {
       // x,y*2是因为每一张卡片占四个小格子
       this.xUnit = x * 2;
       this.yUnit = y * 2;
+      // 初始化地图daxiao
       const cardMap = new Array(z);
-      // 地图初始化
       for (let k = 0; k < z; k++) {
         cardMap[k] = new Array(this.yUnit);
         for (let i = 0; i < this.yUnit; i++) {
           cardMap[k][i] = new Array(this.xUnit).fill(0);
         }
       }
-      return cardMap;
-    },
-    // 表示地图最大为 x * y 张牌，最多有 z 层
-    getMap({ x, y, z, cardRandom } = {}) {
-      // 初始化地图数组，全部为0
-      const cardMap = this.initGameMap({ x, y, z });
+      // 判断那些位置可以放置卡片，将卡片信息存储在cardItemList中
       const cardItemList = [];
       let key = 0;
       for (let k = 0; k < z; k++) {
@@ -258,6 +232,7 @@ export default {
               // 正底不能有牌
               canSetCard = false;
             } else if (Math.random() >= cardRandom) {
+              // 根据卡片密度，随机设置
               canSetCard = false;
             }
             if (canSetCard) {
@@ -294,6 +269,7 @@ export default {
       this.cardItemList = cardItemList;
     },
 
+    // 设置卡片种类
     setCardValue({ maxCardType } = {}) {
       // 卡片种类
       const valStack = new Array(maxCardType);
@@ -308,13 +284,6 @@ export default {
           // 将他们进行三个三个配对
           if (valStack[value].length === 3) {
             valStack[value].forEach((item) => {
-              /**
-               * setValue(val) {
-                  this.val = val;
-                  this.content = CardItem.contentType[val];
-                  Object.assign(this.style, CardItem.colorType[val]);
-                }
-               */
               item.setValue(value);
             });
             valStack[value] = null;
@@ -338,7 +307,7 @@ export default {
     // 计算遮挡关系
     calcCover() {
       // 构建一个遮挡 map
-      // console.log(this.xUnit, this.yUnit);
+      // console.log(this.xUnit);
       let coverMap = new Array(this.yUnit);
       for (let i = 0; i <= this.yUnit; i++) {
         coverMap[i] = new Array(this.xUnit).fill(false);
@@ -358,13 +327,13 @@ export default {
         } else {
           item.cover = false;
         }
+        // 将卡片的四个位置，在遮挡map中设置为true
         coverMap[y][x] = true;
         coverMap[y + 1][x] = true;
         coverMap[y][x + 1] = true;
         coverMap[y + 1][x + 1] = true;
       }
     },
-
     // 点击取出的三张卡片中的卡片
     clickSaveCard(item) {
       this.cardItemList.push(item);
@@ -379,18 +348,6 @@ export default {
       this.penddingList.some((item) => {
         // 判断pendding中是否可以消除
         if (this.calcValueList[item.val] === 3) {
-          this.penddingList.forEach((newItem) => {
-            if (newItem.val === item.val) {
-              // 将其放入清除队列
-              this.clearList.push(newItem);
-            }
-          });
-          // 改变清除队列中卡片的style达到清除的目的
-          setTimeout(() => {
-            this.clearList.forEach((item, index) => {
-              item.style.left = this.leftOffset - 60 + "px";
-            });
-          }, 300);
           // 清除peddinglist中三张重复的
           this.penddingList = this.penddingList.filter((newItem) => {
             return newItem.val !== item.val;
@@ -444,6 +401,60 @@ export default {
         this.removeThree();
       }, 500);
     },
+    // 打乱cardItemList数组
+    randCard() {
+      if (!this.tools.rand) {
+        return;
+      }
+      this.tools.rand = false;
+      const length = this.cardItemList.length;
+      this.cardItemList.forEach((item) => {
+        const randNum = Math.floor(length * Math.random());
+        const newItem = this.cardItemList[randNum];
+        let temp;
+        temp = item.style.left;
+        item.style.left = newItem.style.left;
+        newItem.style.left = temp;
+        temp = item.style.top;
+        item.style.top = newItem.style.top;
+        newItem.style.top = temp;
+        temp = item.x;
+        item.x = newItem.x;
+        newItem.x = temp;
+        temp = item.y;
+        item.y = newItem.y;
+        newItem.y = temp;
+        temp = item.z;
+        item.z = newItem.z;
+        newItem.z = temp;
+      });
+
+      this.cardItemList.sort((a, b) => a.z - b.z);
+      this.calcCover();
+    },
+
+    // 从下面的列表中取出三张卡片
+    saveCard() {
+      if (!this.tools.save) {
+        return false;
+      }
+      this.tools.save = false;
+      // 取出penddingList的前三张卡片
+      this.saveList = this.penddingList.slice(0, 3);
+      // 异步将前三张卡片向上移动
+      setTimeout(() => {
+        this.saveList.forEach((item, index) => {
+          item.style.top = "110%";
+          item.style.left = this.leftOffset + index * CardItem.x * 2 + "px";
+          this.calcValueList[item.val]--;
+        });
+      }, 0);
+      this.penddingList = this.penddingList.slice(3);
+      this.penddingList.forEach((item, index) => {
+        item.style.top = "160%";
+        item.style.left = this.leftOffset + index * CardItem.x * 2 + "px";
+      });
+    },
     // 开始
     startGame() {
       this.initGame();
@@ -455,6 +466,18 @@ export default {
     // 重来
     rePlay() {
       this.initGame();
+    },
+  },
+  computed: {
+    cardWrapStyle() {
+      return {
+        width: (this.xUnit + 2) * CardItem.x + "px",
+        height: (this.yUnit + 1) * CardItem.y + "px",
+      };
+    },
+    leftOffset() {
+      const wrapWidth = (this.xUnit + 2) * CardItem.x;
+      return (wrapWidth - 7 * CardItem.x * 2) / 2;
     },
   },
 };
