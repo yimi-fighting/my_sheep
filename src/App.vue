@@ -1,83 +1,91 @@
 <template>
-  <div v-if="step === 0" class="intro">
-    <div>
-      横向卡片最大平铺排数
-      <input v-model="option.x" min="2" max="10" type="range" /> {{ option.x }}
+  <div class="contain">
+    <div class="adverstive" v-if="adverstive">
+      <div class="time">广告中:{{ time }}s</div>
     </div>
-    <div>
-      纵向卡片最大平铺排数
-      <input v-model="option.y" min="2" max="10" type="range" /> {{ option.y }}
-    </div>
-    <div>
-      卡片最大堆叠层数
-      <input v-model="option.z" min="2" max="10" type="range" /> {{ option.z }}
-    </div>
-    <div>
-      卡片密度
-      <input
-        v-model="option.cardRandom"
-        min="0"
-        max="1"
-        step="0.1"
-        type="range"
-      />
-      {{ option.cardRandom }}
-    </div>
-    <div>
-      最大卡片种类
-      <input
-        v-model="option.maxCardType"
-        min="3"
-        max="14"
-        step="1"
-        type="range"
-      />
-      {{ option.maxCardType }}
-    </div>
-    <br />
-    <button @click="startGame">开始游戏</button>
-  </div>
-  <div v-else-if="step === 2" class="intro">
-    <h1>{{ result ? "You Win！🎉" : "You Lose!😢" }}</h1>
-    <button @click="rePlay">再来一轮</button>
-    <button @click="setGame">难度调节</button>
-  </div>
-  <div v-else class="box">
-    <div class="card-wrap" :style="cardWrapStyle">
-      <div
-        v-for="item in cardItemList"
-        :key="item.key"
-        :class="{ 'item-cover': item.cover }"
-        class="card-item"
-        :style="item.style"
-        @click="clickCard(item)"
-      >
-        {{ item.content }}
+    <div v-if="step === 0" class="intro">
+      <div>
+        横向卡片最大平铺排数
+        <input v-model="option.x" min="2" max="10" type="range" />
+        {{ option.x }}
       </div>
-      <div
-        v-for="item in penddingList"
-        :key="item.key"
-        class="card-item"
-        :style="item.style"
-      >
-        {{ item.content }}
+      <div>
+        纵向卡片最大平铺排数
+        <input v-model="option.y" min="2" max="10" type="range" />
+        {{ option.y }}
       </div>
-      <div
-        v-for="item in saveList"
-        :key="item.key"
-        class="card-item"
-        :style="item.style"
-        @click="clickSaveCard(item)"
-      >
-        {{ item.content }}
+      <div>
+        卡片最大堆叠层数
+        <input v-model="option.z" min="2" max="10" type="range" />
+        {{ option.z }}
       </div>
-      <p class="card-tips">剩余空位:{{ 7 - penddingList.length }}/7；</p>
+      <div>
+        卡片密度
+        <input
+          v-model="option.cardRandom"
+          min="0"
+          max="1"
+          step="0.1"
+          type="range"
+        />
+        {{ option.cardRandom }}
+      </div>
+      <div>
+        最大卡片种类
+        <input
+          v-model="option.maxCardType"
+          min="3"
+          max="14"
+          step="1"
+          type="range"
+        />
+        {{ option.maxCardType }}
+      </div>
+      <br />
+      <button @click="startGame">开始游戏</button>
     </div>
-    <div class="tools">
-      道具：
-      <button :disabled="!tools.save" @click="saveCard">取出3个卡片</button>
-      <button :disabled="!tools.rand" @click="randCard">随机</button>
+    <div v-else-if="step === 2" class="intro">
+      <h1>{{ result ? "You Win！🎉" : "You Lose!😢" }}</h1>
       <button @click="rePlay">再来一轮</button>
+      <button @click="setGame">难度调节</button>
+    </div>
+    <div v-else class="box">
+      <div class="card-wrap" :style="cardWrapStyle">
+        <div
+          v-for="item in cardItemList"
+          :key="item.key"
+          :class="{ 'item-cover': item.cover }"
+          class="card-item"
+          :style="item.style"
+          @click="clickCard(item)"
+        >
+          {{ item.content }}
+        </div>
+        <div
+          v-for="item in penddingList"
+          :key="item.key"
+          class="card-item"
+          :style="item.style"
+        >
+          {{ item.content }}
+        </div>
+        <div
+          v-for="item in saveList"
+          :key="item.key"
+          class="card-item"
+          :style="item.style"
+          @click="clickSaveCard(item)"
+        >
+          {{ item.content }}
+        </div>
+        <p class="card-tips">剩余空位:{{ 7 - penddingList.length }}/7；</p>
+      </div>
+      <div class="tools">
+        道具：
+        <button :disabled="!tools.save" @click="saveCard">取出3个卡片</button>
+        <button :disabled="!tools.rand" @click="randCard">随机</button>
+        <button @click="rePlay">再来一轮</button>
+      </div>
     </div>
   </div>
 </template>
@@ -173,6 +181,10 @@ export default {
         rand: true,
       },
       timer: 0,
+      // 是否显示广告
+      adverstive: false,
+      // 广告时间
+      time: 3,
     };
   },
   methods: {
@@ -403,56 +415,82 @@ export default {
     },
     // 打乱cardItemList数组
     randCard() {
-      if (!this.tools.rand) {
-        return;
-      }
-      this.tools.rand = false;
-      const length = this.cardItemList.length;
-      this.cardItemList.forEach((item) => {
-        const randNum = Math.floor(length * Math.random());
-        const newItem = this.cardItemList[randNum];
-        let temp;
-        temp = item.style.left;
-        item.style.left = newItem.style.left;
-        newItem.style.left = temp;
-        temp = item.style.top;
-        item.style.top = newItem.style.top;
-        newItem.style.top = temp;
-        temp = item.x;
-        item.x = newItem.x;
-        newItem.x = temp;
-        temp = item.y;
-        item.y = newItem.y;
-        newItem.y = temp;
-        temp = item.z;
-        item.z = newItem.z;
-        newItem.z = temp;
-      });
+      new Promise((resolve) => {
+        this.adverstive = true;
+        this.time = 3;
+        let timers = setInterval(() => {
+          this.time--;
+          if (this.time <= 0) {
+            clearInterval(timers);
+            this.adverstive = false;
+            resolve();
+          }
+        }, 1000);
+      }).then(() => {
+        if (!this.tools.rand) {
+          return;
+        }
+        this.tools.rand = false;
+        const length = this.cardItemList.length;
+        this.cardItemList.forEach((item) => {
+          const randNum = Math.floor(length * Math.random());
+          const newItem = this.cardItemList[randNum];
+          let temp;
+          temp = item.style.left;
+          item.style.left = newItem.style.left;
+          newItem.style.left = temp;
+          temp = item.style.top;
+          item.style.top = newItem.style.top;
+          newItem.style.top = temp;
+          temp = item.x;
+          item.x = newItem.x;
+          newItem.x = temp;
+          temp = item.y;
+          item.y = newItem.y;
+          newItem.y = temp;
+          temp = item.z;
+          item.z = newItem.z;
+          newItem.z = temp;
+        });
 
-      this.cardItemList.sort((a, b) => a.z - b.z);
-      this.calcCover();
+        this.cardItemList.sort((a, b) => a.z - b.z);
+        this.calcCover();
+      });
     },
 
     // 从下面的列表中取出三张卡片
     saveCard() {
-      if (!this.tools.save) {
-        return false;
-      }
-      this.tools.save = false;
-      // 取出penddingList的前三张卡片
-      this.saveList = this.penddingList.slice(0, 3);
-      // 异步将前三张卡片向上移动
-      setTimeout(() => {
-        this.saveList.forEach((item, index) => {
-          item.style.top = "110%";
+      new Promise((resolve) => {
+        this.adverstive = true;
+        this.time = 3;
+        let timers = setInterval(() => {
+          this.time--;
+          if (this.time <= 0) {
+            clearInterval(timers);
+            this.adverstive = false;
+            resolve();
+          }
+        }, 1000);
+      }).then(() => {
+        if (!this.tools.save) {
+          return false;
+        }
+        this.tools.save = false;
+        // 取出penddingList的前三张卡片
+        this.saveList = this.penddingList.slice(0, 3);
+        // 异步将前三张卡片向上移动
+        setTimeout(() => {
+          this.saveList.forEach((item, index) => {
+            item.style.top = "110%";
+            item.style.left = this.leftOffset + index * CardItem.x * 2 + "px";
+            this.calcValueList[item.val]--;
+          });
+        }, 0);
+        this.penddingList = this.penddingList.slice(3);
+        this.penddingList.forEach((item, index) => {
+          item.style.top = "160%";
           item.style.left = this.leftOffset + index * CardItem.x * 2 + "px";
-          this.calcValueList[item.val]--;
         });
-      }, 0);
-      this.penddingList = this.penddingList.slice(3);
-      this.penddingList.forEach((item, index) => {
-        item.style.top = "160%";
-        item.style.left = this.leftOffset + index * CardItem.x * 2 + "px";
       });
     },
     // 开始
@@ -484,6 +522,30 @@ export default {
 </script>
 
 <style>
+html {
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+.contain {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+.adverstive {
+  width: 100%;
+  height: 100%;
+  background: black;
+  opacity: 0.2;
+  position: absolute;
+  z-index: 999;
+  color: white;
+}
+.time {
+  position: absolute;
+  right: 10px;
+}
 .box {
   position: relative;
 }
